@@ -87,34 +87,6 @@ int Base64_Decode(char *in, size_t inLen, unsigned char *out, size_t *outLen) {
 	return 0;
 }
 
-
-void Encrypt_Magic(const char *src, char *dst, int len) {
-	unsigned long magic = 0x686b7773;
-	unsigned long passwdInt = 0;
-	int i;
-
-	dst[0] = 0;
-	if(len == 0)
-		return;
-
-	for(i = 0; i < len; i++)
-		passwdInt += src[i] *  (i + 1) ^ (i + 1);
-
-	sprintf(dst, "%u", (long) (passwdInt * magic));
-	for(i = 0; i < strlen(dst); i++) {
-		if (dst[i] < '3') {   
-			dst[i] = dst[i] + 'B';   
-		} else if (dst[i] < '5') {   
-			dst[i] = dst[i] + '/';   
-		} else if (dst[i] < '7') {   
-			dst[i] = dst[i] + '>';   
-		} else if (dst[i] < '9') {   
-			dst[i] = dst[i] + '!';   
-		}
-	}
-	return;
-}
-
 void HMAC_MD5(const unsigned char *data, int data_len, const unsigned char *key, int key_len, unsigned char digest[16]) {
 	MD5_CTX context;
 	unsigned char k_ipad[65];
@@ -174,8 +146,7 @@ int DVR_Login(const char *ip, unsigned short int port, const char *login, const 
 	unsigned char request[84];
 	memset(request, 0, sizeof(request));
 	memcpy(request, header, sizeof(header));
-	Encrypt_Magic(login, request + 36, strlen(login));
-	Encrypt_Magic(password, request + 68, strlen(password));
+
 	unsigned char response[76];
 	memset(response, 0, sizeof(response));
 	res = send(sock, request, sizeof(request), 0);
@@ -320,6 +291,10 @@ void *Stat_Thread() {
 }
 
 int main(int argc, char *argv[]) {
+	if(argc < 2) {
+		fprintf(stderr, "Usage: hikikomori <threads num>\n");
+		return 0;
+	}
 	timeout.tv_sec = 2;
 	timeout.tv_usec = 0;
 	max_timeouts = 3;
